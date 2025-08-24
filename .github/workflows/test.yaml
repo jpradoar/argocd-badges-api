@@ -34,8 +34,9 @@ jobs:
 
 
     steps:
-      - name: Checkout
-        run: echo "branch: ${{ env.GH_REPO_BRANCH }}
+
+      - name: test
+        run: echo "branch: ${{ env.GH_REPO_BRANCH }}"
 
 
 
