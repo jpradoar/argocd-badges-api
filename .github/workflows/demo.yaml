@@ -1,4 +1,4 @@
-name: argocd-badges-api
+name: argocd-badges-api 
 
 on:
   push:
