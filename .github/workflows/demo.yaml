@@ -159,3 +159,4 @@ jobs:
           SLACK_TITLE: ":img_docker: Docker image built and pushed"
           SLACK_MESSAGE: "Images: ${{ github.repository_owner }}/${{ env.REPO_APP }}:${{ steps.get_version.outputs.version }}"
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+ 
