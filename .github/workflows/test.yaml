@@ -22,7 +22,7 @@ env:
   TRIVY_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
   GH_REPO_OWNER: ${{ github.repository_owner }}
   GH_REPO_NAME: ${{ github.event.repository.name }}
-  GH_REPO_BRANCH: ${{ github.head_ref }}
+  GH_REPO_BRANCH: ${{GITHUB_REF##*/}}
 
 jobs:
   build-and-release:
