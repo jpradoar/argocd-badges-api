@@ -1,0 +1,41 @@
+name: test
+
+on:
+  push:
+    branches:
+      - develop
+      - '.github/workflows/test.yaml'
+      
+env:
+  BUILD_CONTEXT: './app'
+  SLACK_CHANNEL: 'builds-and-ci'
+  SLACK_MSG_COLOR: '#0092ff'
+  COMMITER_NAME: 'AutoCommit'
+  VULN_SEVERITY: 'CRITICAL,HIGH'
+  VULN_TYPE: 'os,library'
+  VULN_FORMAT: 'table'
+  VULN_TIMEOUT_SCAN: '2m0s'
+  VULN_SCANNERS: 'vuln,secret,misconfig,license'
+  VULN_IGNORED_LIC: 'MIT'
+  VULN_EXIT_CODE: 1
+  TRIVY_DISABLE_VEX_NOTICE: true
+  TRIVY_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+  GH_REPO_OWNER: ${{ github.repository_owner }}
+  GH_REPO_NAME: ${{ github.event.repository.name }}
+  GH_REPO_BRANCH: ${{ github.head_ref }}
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      actions: write
+
+
+    steps:
+      - name: Checkout
+        run: echo "branch: ${{ env.GH_REPO_BRANCH }}
+
+
+
