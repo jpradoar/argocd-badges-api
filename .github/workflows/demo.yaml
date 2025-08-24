@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - develop
-    # paths:
-    #   - 'app/**'
+    paths:
+      - 'app/**'
+      - '.github/workflows/demo.yaml'
 
 env:
   BUILD_CONTEXT: './app'
@@ -118,49 +119,49 @@ jobs:
           tags: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }}
 
 
-    - name: update data
-      if: ${{ steps.trivy_scan.outcome == 'failure' }}
-      run: |
-          git pull
-          
-
-    - name: Upload vuln scan report
-      uses: EndBug/add-and-commit@v9
-      with:
-        message: 'AutoCommit: upload vuln scan report'
-        add: './vuln_scans/${{ env.REPO_APP }}_vuln_scan.table'
+      - name: update data
+        if: ${{ steps.trivy_scan.outcome == 'failure' }}
+        run: |
+            git pull
 
 
-    - name: Vulnerability detected - Create issue
-      if: ${{ steps.trivy_scan.outcome == 'failure' }}
-      run: |
-        body="New vulnerability detected on vuln_scans/${{ env.REPO_APP }}_vuln_scan.table"
-        gh issue create \
-        --repo ${{ github.repository }} \
-        --title ":skull: [vuln] vulnerability detected on image ${{ env.REPO_APP }} " \
-        --body-file '/tmp/vuln_info.md' \
-        --assignee "jpradoar" \
-        --label bug --label vulnerability
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload vuln scan report
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'AutoCommit: upload vuln scan report'
+          add: './vuln_scans/${{ env.REPO_APP }}_vuln_scan.table'
 
 
-    - name: Slack docker build Notification
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
-        SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
-        SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
-        SLACK_TITLE: ':rocket: GithubAction Build docker image: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Vulnerability detected - Create issue
+        if: ${{ steps.trivy_scan.outcome == 'failure' }}
+        run: |
+          body="New vulnerability detected on vuln_scans/${{ env.REPO_APP }}_vuln_scan.table"
+          gh issue create \
+          --repo ${{ github.repository }} \
+          --title ":skull: [vuln] vulnerability detected on image ${{ env.REPO_APP }} " \
+          --body-file '/tmp/vuln_info.md' \
+          --assignee "jpradoar" \
+          --label bug --label vulnerability
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
-    - name: Slack Vulnerability Notification
-      if: ${{ steps.trivy_scan.outcome == 'failure' }}
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
-        SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
-        SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
-        SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Slack docker build Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
+          SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
+          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
+          SLACK_TITLE: ':rocket: GithubAction Build docker image: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+
+      - name: Slack Vulnerability Notification
+        if: ${{ steps.trivy_scan.outcome == 'failure' }}
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: ${{ env.SLACK_CHANNEL }}
+          SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
+          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
+          SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.REPO_APP }}:${{ steps.nversion.outputs.NEW_VERSION }} ]'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
