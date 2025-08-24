@@ -8,7 +8,6 @@ on:
     #   - 'app/**'
 
 env:
-  REPO_APP: 'argocd-badges-api'
   BUILD_CONTEXT: './app'
   SLACK_CHANNEL: 'builds-and-ci'
   SLACK_MSG_COLOR: '#0092ff'
@@ -43,14 +42,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Build Docker image :latest
+      - name: Build Docker image
         id: docker_build
         uses: docker/build-push-action@v4
         with:
           context: ${{ env.BUILD_CONTEXT }}
-          push: false
+          push: true
           load: true
-          tags: ${{ github.repository_owner }}/${{ env.REPO_APP }}:latest
+          tags: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:latest
+          username: ${{ ${{ env.GH_REPO_OWNER }} }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN_FORGITHUB_ACTIONS }}
 
       - name: Install Trivy
         run: |
@@ -76,15 +77,15 @@ jobs:
             --exit-code ${{ env.VULN_EXIT_CODE }} \
             --db-repository ${{ env.TRIVY_REPOSITORY }} \
             --ignore-unfixed \
-            -o ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table \
-            ${{ github.repository_owner }}/${{ env.REPO_APP }}:latest
+            -o ./vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.table \
+            ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:latest
           EXITCODE=$?
           echo "exitcode=$EXITCODE" >> $GITHUB_OUTPUT
           exit 0
 
 
       - name: Show Trivy report
-        run: cat ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table
+        run: cat ./vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.table
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -111,32 +112,43 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Tag & Push Docker images
-        id: docker_push
-        run: |
-          IMAGE=${{ github.repository_owner }}/${{ env.REPO_APP }}
-          VERSION=${{ steps.get_version.outputs.version }}
-          echo "📦 Pushing Docker image $IMAGE:latest"
-          echo "   Pushing Docker image $IMAGE:$VERSION"
-          docker tag $IMAGE:latest $IMAGE:$VERSION
-          docker push $IMAGE:latest
-          docker push $IMAGE:$VERSION
+      # - name: Tag & Push Docker images
+      #   id: docker_push
+      #   run: |
+      #     IMAGE=${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}
+      #     VERSION=${{ steps.get_version.outputs.version }}
+      #     echo "📦 Pushing Docker image $IMAGE:latest"
+      #     echo "   Pushing Docker image $IMAGE:$VERSION"
+      #     docker tag $IMAGE:latest $IMAGE:$VERSION
+      #     docker push $IMAGE:latest
+      #     docker push $IMAGE:$VERSION
+
+      - name: Build & Push Docker images
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.BUILD_CONTEXT }}
+          push: true
+          load: true
+          tags: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }}
+          username: ${{ ${{ env.GH_REPO_OWNER }} }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN_FORGITHUB_ACTIONS }}
+
 
       - name: Prepare GitHub issue body
         if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push.conclusion == 'success'
         run: |
           echo "### See detailed information in: " > /tmp/vuln_info.md
           echo "<br>![](https://custom-icon-badges.demolab.com/badge/Vulnerability-detected-red.svg) <br>" >> /tmp/vuln_info.md
-          echo "* Detected in image: [${{ env.REPO_APP }}](https://hub.docker.com/repository/docker/${{ github.repository_owner }}/${{ env.REPO_APP }}/general)" >> /tmp/vuln_info.md
+          echo "* Detected in image: [${{ env.GH_REPO_NAME }}](https://hub.docker.com/repository/docker/${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}/general)" >> /tmp/vuln_info.md
           echo "* Detected in commit: ${{ github.sha }}" >> /tmp/vuln_info.md
-          echo "* Vulnerability report: [vuln_report](https://${{ env.GH_REPO_OWNER }}.github.io/${{ env.GH_REPO_NAME }}/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)" >> /tmp/vuln_info.md
+          echo "* Vulnerability report: [vuln_report](https://${{ env.GH_REPO_OWNER }}.github.io/${{ env.GH_REPO_NAME }}/vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
 
       - name: Create GitHub issue for vulnerability
         if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push.conclusion == 'success'
         run: |
           gh issue create \
             --repo ${{ github.repository }} \
-            --title ":skull: [vuln] Vulnerability in image ${{ env.REPO_APP }}:latest" \
+            --title ":skull: [vuln] Vulnerability in image ${{ env.GH_REPO_NAME }}:latest" \
             --body-file '/tmp/vuln_info.md' \
             --assignee "${{ env.GH_REPO_OWNER }}" \
             --label bug
@@ -158,6 +170,5 @@ jobs:
         env:
           SLACK_COLOR: '#2c74e8'
           SLACK_TITLE: ":img_docker: Docker image built and pushed"
-          SLACK_MESSAGE: "Images: ${{ github.repository_owner }}/${{ env.REPO_APP }}:${{ steps.get_version.outputs.version }}"
+          SLACK_MESSAGE: "Images: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }}"
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
- 
