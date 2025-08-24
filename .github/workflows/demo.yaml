@@ -176,3 +176,23 @@ jobs:
           SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
           SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pull latest changes
+        run: git pull origin ${{ env.GH_REPO_BRANCH }}
+
+      - name: Upload vuln scan report
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: 'AutoCommit: upload vuln scan report'
+          add: './vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.table'
+
+
+      - name: Pull latest changes
+        run: |
+            curl -X POST -H 'Content-type: application/json; charset=utf-8' --data '{ "text": "Ready!" }' ${{ secrets.SLACK_BUILDS }}
