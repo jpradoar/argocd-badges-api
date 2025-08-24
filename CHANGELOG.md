@@ -1,3 +1,10 @@
+## [1.0.9](https://github.com/jpradoar/argocd-badges-api/compare/v1.0.8...v1.0.9) (2025-08-24)
+
+
+### Bug Fixes
+
+* **workflow:** test workflow 11 ([8433b5e](https://github.com/jpradoar/argocd-badges-api/commit/8433b5e05864ee1a6148035ee27936db844645ff))
+
 ## [1.0.8](https://github.com/jpradoar/argocd-badges-api/compare/v1.0.7...v1.0.8) (2025-08-24)
 
 
