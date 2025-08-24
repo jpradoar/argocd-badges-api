@@ -105,8 +105,8 @@ jobs:
           VERSION=$(curl -s -m 10 --connect-timeout 5 \
             "https://api.github.com/repos/${{ github.repository }}/releases/latest" | jq -r .tag_name)
           if [ "$VERSION" = "null" ] || [ -z "$VERSION" ]; then
-            echo "No release found, setting VERSION=0.0.1"
-            VERSION="0.0.1"
+            echo "No release found, setting VERSION=v0.0.1"
+            VERSION="v0.0.1"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
@@ -114,10 +114,12 @@ jobs:
         id: docker_push
         run: |
           IMAGE=${{ github.repository_owner }}/${{ env.REPO_APP }}
-          echo "📦 Pushing Docker images with VERSION=${{ steps.get_version.outputs.version }}"
-          docker tag $IMAGE:latest $IMAGE:${{ steps.get_version.outputs.version }}
+          VERSION=${{ steps.get_version.outputs.version }}
+          echo "📦 Pushing Docker image $IMAGE:latest"
+          echo "   Pushing Docker image $IMAGE:$VERSION"
           docker push $IMAGE:latest
-          docker push $IMAGE:${{ steps.get_version.outputs.version }}
+          docker tag $IMAGE:latest $IMAGE:$VERSION
+          docker push $IMAGE:$VERSION
 
       - name: Prepare GitHub issue body
         if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push.conclusion == 'success'

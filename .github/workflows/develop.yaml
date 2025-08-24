@@ -3,7 +3,7 @@ name: argocd-badges-api
 on:
   push:
     branches:
-      - develop
+      - disabled
     paths:
       - 'app/**'
       - '.github/workflows/develop.yaml'
