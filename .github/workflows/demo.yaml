@@ -191,3 +191,8 @@ jobs:
         with:
           message: 'AutoCommit: upload vuln scan report'
           add: './vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.table'
+
+
+      # - name: Pull latest changes
+      #   run: |
+      #       curl -X POST -H 'Content-type: application/json; charset=utf-8' --data '{ "text": "Ready!" }' ${{ secrets.SLACK_BUILDS }}
