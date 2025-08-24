@@ -111,12 +111,12 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Build & Push Docker images
+      - name: Push Docker exact version
+        id: docker_push_version
         uses: docker/build-push-action@v4
         with:
           context: ${{ env.BUILD_CONTEXT }}
           push: true
-          load: true
           tags: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }}
 
 
@@ -130,7 +130,7 @@ jobs:
           echo "* Vulnerability report: [vuln_report](https://${{ env.GH_REPO_OWNER }}.github.io/${{ env.GH_REPO_NAME }}/vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.html)" >> /tmp/vuln_info.md
 
       - name: Create GitHub issue for vulnerability
-        if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push.conclusion == 'success'
+        if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push_version == 'true'
         run: |
           gh issue create \
             --repo ${{ github.repository }} \
@@ -142,7 +142,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Slack notification - Vulnerability
-        if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push.conclusion == 'success'
+        if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push_version == 'true'
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: '#e82c2c'
@@ -151,7 +151,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Slack notification - Docker pushed
-        if: steps.docker_push.conclusion == 'success'
+        if: steps.docker_build.conclusion == 'success'
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: '#2c74e8'
