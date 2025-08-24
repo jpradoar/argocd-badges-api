@@ -82,8 +82,6 @@ jobs:
             ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:latest
           EXITCODE=$?
           echo "exitcode=$EXITCODE" >> $GITHUB_OUTPUT
-          exit 0
-
 
       - name: Show Trivy report
         run: cat ./vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.table
@@ -112,17 +110,6 @@ jobs:
             VERSION="v0.0.1"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      # - name: Tag & Push Docker images
-      #   id: docker_push
-      #   run: |
-      #     IMAGE=${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}
-      #     VERSION=${{ steps.get_version.outputs.version }}
-      #     echo "📦 Pushing Docker image $IMAGE:latest"
-      #     echo "   Pushing Docker image $IMAGE:$VERSION"
-      #     docker tag $IMAGE:latest $IMAGE:$VERSION
-      #     docker push $IMAGE:latest
-      #     docker push $IMAGE:$VERSION
 
       - name: Build & Push Docker images
         uses: docker/build-push-action@v4
