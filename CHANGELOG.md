@@ -5,6 +5,15 @@
 
 * **all:** add all data ([9d963cf](https://github.com/jpradoar/argocd-badges-api/commit/9d963cf9b3bf7e26c9749af2066359c7b736c9d3))
 * **workflow:** test workflow 1 ([2e31867](https://github.com/jpradoar/argocd-badges-api/commit/2e3186785c32449b21b5500474ead7fc23f1be60))
+* **workflow:** test workflow 2 ([6822887](https://github.com/jpradoar/argocd-badges-api/commit/682288758765e2887e5697791d14727402ecee74))
+
+# 1.0.0 (2025-08-24)
+
+
+### Bug Fixes
+
+* **all:** add all data ([9d963cf](https://github.com/jpradoar/argocd-badges-api/commit/9d963cf9b3bf7e26c9749af2066359c7b736c9d3))
+* **workflow:** test workflow 1 ([2e31867](https://github.com/jpradoar/argocd-badges-api/commit/2e3186785c32449b21b5500474ead7fc23f1be60))
 
 ## [1.0.3](https://github.com/jpradoar/argocd-badges-api/compare/v1.0.2...v1.0.3) (2025-08-24)
 
