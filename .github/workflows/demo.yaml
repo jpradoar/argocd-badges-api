@@ -140,7 +140,7 @@ jobs:
         uses: EndBug/add-and-commit@v9
         with:
           message: 'AutoCommit: upload vuln scan report'
-          add: './vuln_scans/${{ env.REPO_APP }}_vuln_scan.table'
+          add: './vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.table'
 
 
       - name: Vulnerability detected - Create issue
@@ -160,22 +160,22 @@ jobs:
       - name: Slack docker build Notification
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: ${{ env.SLACK_BUILDS }}
+          SLACK_CHANNEL: 'builds'
           SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
           SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
           SLACK_TITLE: ':rocket: GithubAction Build docker image: [ ${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }} ]'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ env.SLACK_BUILDS }}
 
 
       - name: Slack Vulnerability Notification
         if: ${{ steps.trivy_scan.outcome == 'failure' }}
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_CHANNEL: ${{ env.SLACK_SECURITY_ISSUES }}
+          SLACK_CHANNEL: 'security_issues' 
           SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
           SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/jpradoar/${{ env.REPO_APP }}'
           SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }} ]'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK: ${{ env.SLACK_SECURITY_ISSUES }}
 
 
       - name: Checkout branch
@@ -191,8 +191,3 @@ jobs:
         with:
           message: 'AutoCommit: upload vuln scan report'
           add: './vuln_scans/${{ env.GH_REPO_NAME }}_vuln_scan.table'
-
-
-      - name: Pull latest changes
-        run: |
-            curl -X POST -H 'Content-type: application/json; charset=utf-8' --data '{ "text": "Ready!" }' ${{ secrets.SLACK_BUILDS }}
