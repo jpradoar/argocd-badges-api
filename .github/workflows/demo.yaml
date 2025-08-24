@@ -50,7 +50,7 @@ jobs:
           push: true
           load: true
           tags: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:latest
-          username: ${{ ${{ env.GH_REPO_OWNER }} }}
+          username: ${{ env.GH_REPO_OWNER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN_FORGITHUB_ACTIONS }}
 
       - name: Install Trivy
@@ -130,7 +130,7 @@ jobs:
           push: true
           load: true
           tags: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }}
-          username: ${{ ${{ env.GH_REPO_OWNER }} }}
+          username: ${{ env.GH_REPO_OWNER }}
           password: ${{ secrets.DOCKER_HUB_TOKEN_FORGITHUB_ACTIONS }}
 
 
