@@ -1,4 +1,4 @@
-name: argocd-badges-api 
+name: argocd-badges-api
 
 on:
   push:
@@ -49,6 +49,7 @@ jobs:
         with:
           context: ${{ env.BUILD_CONTEXT }}
           push: false
+          load: true
           tags: ${{ github.repository_owner }}/${{ env.REPO_APP }}:latest
 
       - name: Install Trivy
