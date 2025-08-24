@@ -36,7 +36,8 @@ jobs:
     steps:
 
       - name: test
-        run: echo branch: ${{ env.GH_REPO_BRANCH }}
+        run: |
+          echo "branch: ${{ env.GH_REPO_BRANCH }}"
 
 
 
