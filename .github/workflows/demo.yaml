@@ -151,7 +151,7 @@ jobs:
           --title ":skull: [vuln] vulnerability detected on image ${{ env.REPO_APP }} " \
           --body-file '/tmp/vuln_info.md' \
           --assignee "jpradoar" \
-          --label bug --label vulnerability
+          --label bug
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
