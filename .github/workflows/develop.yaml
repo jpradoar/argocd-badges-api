@@ -1,0 +1,83 @@
+name: argocd-badges-api
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'app/**'
+      - '.github/workflows/develop.yaml'
+
+env:
+  REPO_APP: 'argocd-badges-api'
+  BUILD_CONTEXT: './app'
+  SLACK_CHANNEL: 'builds-and-ci'
+  SLACK_MSG_COLOR: '#0092ff'
+  COMMITER_NAME: 'AutoCommit'
+  VULN_SEVERITY: 'CRITICAL'
+  VULN_TYPE: 'os,library'
+  VULN_FORMAT: 'table'
+  VULN_TIMEOUT_SCAN: '2m0s'
+  VULN_SCANNERS: 'vuln,secret,misconfig,license'
+  VULN_IGNORED_LIC: 'MIT'
+  VULN_EXIT_CODE: 1
+  TRIVY_DISABLE_VEX_NOTICE: true
+  TRIVY_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+  GH_REPO_OWNER: ${{ github.repository_owner }}
+  GH_REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  CI-argocd-badges-api:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      security-events: write
+      actions: read
+      issues: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build image with :latest
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.BUILD_CONTEXT }}
+          push: false
+          tags: jpradoar/${{ env.REPO_APP }}:latest
+
+      - name: Install trivy last version
+        run: |
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+
+      - name: search for vulnerabilities
+        id: trivy_scan
+        continue-on-error: true
+        run: |
+          rm -rf ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table
+          trivy image \
+           --scanners ${{ env.VULN_SCANNERS }} \
+           --severity ${{ env.VULN_SEVERITY }} \
+           --timeout ${{ env.VULN_TIMEOUT_SCAN }} \
+           --pkg-types ${{ env.VULN_TYPE }} \
+           --license-full \
+           --ignored-licenses ${{ env.VULN_IGNORED_LIC }} \
+           --format ${{ env.VULN_FORMAT }} \
+           --exit-code ${{ env.VULN_EXIT_CODE }} \
+           --db-repository ${{ env.TRIVY_REPOSITORY }} \
+           --ignore-unfixed \
+           -o ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table \
+           jpradoar/${{ env.REPO_APP }}:latest
+
+      - name: show report
+        run: |
+          cat ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table

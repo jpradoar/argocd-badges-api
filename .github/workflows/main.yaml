@@ -1,0 +1,170 @@
+name: argocd-badges-api
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+
+env:
+  REPO_APP: 'argocd-badges-api'
+  BUILD_CONTEXT: './app'
+  SLACK_CHANNEL: 'builds-and-ci'
+  SLACK_MSG_COLOR: '#0092ff'
+  COMMITER_NAME: 'AutoCommit'
+  VULN_SEVERITY: 'CRITICAL'
+  VULN_TYPE: 'os,library'
+  VULN_FORMAT: 'table'
+  VULN_TIMEOUT_SCAN: '2m0s'
+  VULN_SCANNERS: 'vuln,secret,misconfig,license'
+  VULN_IGNORED_LIC: 'MIT'
+  VULN_EXIT_CODE: 1
+  TRIVY_DISABLE_VEX_NOTICE: true
+  TRIVY_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+  GH_REPO_OWNER: ${{ github.repository_owner }}
+  GH_REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      actions: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Get last release
+        id: last_release
+        run: |
+          LATEST_VERSION=$(curl --silent -m 10 --connect-timeout 5 "https://api.github.com/repos/jpradoar/argocd-badges-api/releases/latest" | jq -r .tag_name)
+          # fallback si no hay release
+          LATEST_VERSION=${LATEST_VERSION:-0.0.0}
+          echo "VERSION=$LATEST_VERSION" >> $GITHUB_OUTPUT
+
+    
+      - name: Generate semantic version
+        id: get_version
+        uses: jpradoar/ga-semanticversion@v1.0.0
+        with:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          VERSION:  ${{ github.event.last_release.message }}
+
+      - name: Generate CHANGELOG.md
+        run: |
+          npm install -g conventional-changelog-cli
+          conventional-changelog -p angular -i CHANGELOG.md -s
+
+      - name: Create GitHub release
+        id: gh_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.NEW_VERSION }}
+          release_name: Release ${{ steps.get_version.outputs.NEW_VERSION }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image :latest
+        id: docker_build
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.BUILD_CONTEXT }}
+          push: false
+          tags: ${{ github.repository_owner }}/${{ env.REPO_APP }}:latest
+
+      - name: Tag & Push Docker image with version
+        id: docker_push
+        run: |
+          IMAGE=${{ github.repository_owner }}/${{ env.REPO_APP }}
+          VERSION=${{ steps.get_version.outputs.NEW_VERSION }}
+          echo "📦 Pushing Docker images: latest and $VERSION"
+          docker tag $IMAGE:latest $IMAGE:$VERSION
+          docker push $IMAGE:latest
+          docker push $IMAGE:$VERSION
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy -y
+
+      - name: Run Trivy vulnerability scan
+        id: trivy_scan
+        continue-on-error: true
+        run: |
+          mkdir -p ./vuln_scans
+          trivy image \
+            --scanners ${{ env.VULN_SCANNERS }} \
+            --severity ${{ env.VULN_SEVERITY }} \
+            --timeout ${{ env.VULN_TIMEOUT_SCAN }} \
+            --pkg-types ${{ env.VULN_TYPE }} \
+            --license-full \
+            --ignored-licenses ${{ env.VULN_IGNORED_LIC }} \
+            --format ${{ env.VULN_FORMAT }} \
+            --exit-code ${{ env.VULN_EXIT_CODE }} \
+            --db-repository ${{ env.TRIVY_REPOSITORY }} \
+            --ignore-unfixed \
+            -o ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table \
+            ${{ github.repository_owner }}/${{ env.REPO_APP }}:${{ steps.get_version.outputs.NEW_VERSION }}
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+
+      - name: Show Trivy report
+        run: cat ./vuln_scans/${{ env.REPO_APP }}_vuln_scan.table
+
+      - name: Prepare GitHub issue body (if vuln)
+        if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push.conclusion == 'success'
+        run: |
+          echo "### See detailed information in: " > /tmp/vuln_info.md
+          echo "<br>![](https://custom-icon-badges.demolab.com/badge/Vulnerability-detected-red.svg) <br>" >> /tmp/vuln_info.md
+          echo "* Detected in image: [${{ env.REPO_APP }}](https://hub.docker.com/repository/docker/${{ github.repository_owner }}/${{ env.REPO_APP }}/general)" >> /tmp/vuln_info.md
+          echo "* Detected in commit: ${{ github.sha }}" >> /tmp/vuln_info.md
+          echo "* Vulnerability report: [vuln_report](https://${{ env.GH_REPO_OWNER }}.github.io/${{ env.GH_REPO_NAME }}/vuln_scans/${{ env.REPO_APP }}_vuln_scan.html)" >> /tmp/vuln_info.md
+
+      - name: Create GitHub issue for vulnerability
+        if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push.conclusion == 'success'
+        run: |
+          gh issue create \
+            --repo ${{ github.repository }} \
+            --title ":skull: [vuln] Vulnerability in image ${{ env.REPO_APP }}:${{ steps.get_version.outputs.NEW_VERSION }}" \
+            --body-file '/tmp/vuln_info.md' \
+            --assignee "${{ env.GH_REPO_OWNER }}" \
+            --label bug
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Slack notification - Vulnerability
+        if: steps.trivy_scan.outputs.exitcode != '0' && steps.docker_push.conclusion == 'success'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: '#e82c2c'
+          SLACK_TITLE: ':skull: Vulnerability detected & issue created'
+          SLACK_MESSAGE: 'See GitHub issues: https://github.com/${{ env.GH_REPO_OWNER }}/${{ env.GH_REPO_NAME }}/issues'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Slack notification - Docker pushed
+        if: steps.docker_push.conclusion == 'success'
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_COLOR: '#2c74e8'
+          SLACK_TITLE: ":img_docker: Docker image built and pushed"
+          SLACK_MESSAGE: "Images: ${{ github.repository_owner }}/${{ env.REPO_APP }}:latest ${{ steps.get_version.outputs.NEW_VERSION }}"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

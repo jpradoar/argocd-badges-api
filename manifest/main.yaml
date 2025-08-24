@@ -1,0 +1,107 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-badges-api
+  namespace: default
+  labels:
+    app: argocd-badges-api
+spec:
+  replicas: 1
+  type: RollingUpdate    
+  rollingUpdate:      
+     maxSurge: 50%          
+     maxUnavailable: 0  
+  selector:
+    matchLabels:
+      app: argocd-badges-api
+  template:
+    metadata:
+      labels:
+        app: argocd-badges-api
+    spec:
+  strategy: 
+      containers:
+        - name: argocd-badges-api
+          image: jpradoar/argocd-badges-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            # Endpoint del servicio de ArgoCD. uso el alias 'argocd-server' para abstraer el nombre real.
+            - name: ARGOCD_SERVER
+              value: "https://argocd-server.argocd.svc.cluster.local:443"
+            - name: ARGOCD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: showappsapi-secret
+                  key: showappsapi-secret
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 2
+          periodSeconds: 10          
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8080
+          initialDelaySeconds: 2
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 50Mi
+          limits:
+            cpu: 150m
+            memory: 512Mi
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true  
+          runAsNonRoot: true
+          capabilities:
+            drop: ["ALL"]
+
+
+
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-badges-api
+  namespace: default
+  labels:
+    app: argocd-badges-api
+spec:
+  selector:
+    app: argocd-badges-api
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
+
+
+# Este servicio es un alias, para evitar que si el nombre de ArgoCD es deployado con otro nombre, 
+# el "alias local" siempre resuelve el mismo nombre del servicio.
+# de esta manera en la api siempre puedo usar el mismo nombre de servicio sin importar que nombre tenga argocd-server
+# acá si uso un nombre "custom" para argocd lo puedo cambiar sin depender de argocd 
+# ejemplo:
+#   cicd-argocd-server.argocd.svc.cluster.local
+#   abcd-argocd-server.argocd.svc.cluster.local
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: argocd-server.argocd.svc.cluster.local
