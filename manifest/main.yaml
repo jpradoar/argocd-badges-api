@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,7 +27,6 @@ spec:
           ports:
             - containerPort: 8080
           env:
-            # Endpoint del servicio de ArgoCD. uso el alias 'argocd-server' para abstraer el nombre real.
             - name: ARGOCD_SERVER
               value: "https://argocd-server.argocd.svc.cluster.local:443"
             - name: ARGOCD_TOKEN
@@ -36,35 +34,34 @@ spec:
                 secretKeyRef:
                   name: showappsapi-secret
                   key: showappsapi-secret
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 2
-          periodSeconds: 10          
-        readinessProbe:
-          httpGet:
-            path: /readiness
-            port: 8080
-          initialDelaySeconds: 2
-          periodSeconds: 10
-        resources:
-          requests:
-            cpu: 50m
-            memory: 50Mi
-          limits:
-            cpu: 150m
-            memory: 512Mi
-        securityContext:
-          runAsUser: 1000
-          runAsGroup: 1000
-          allowPrivilegeEscalation: false
-          privileged: false
-          readOnlyRootFilesystem: true  
-          runAsNonRoot: true
-          capabilities:
-            drop: ["ALL"]
-
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 50Mi
+            limits:
+              cpu: 150m
+              memory: 512Mi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
 
 
 
