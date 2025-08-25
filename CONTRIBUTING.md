@@ -1,92 +1,125 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change. 
+All contribution are welcome!!!. When contributing to this repository, please first  check if your contribution is not planned yet, or search in old issues if something similar already exist.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
+Below you have a few considerations to keep in mind and some examples to help you to use a minimal good practices.
 
-## Pull Request Process
+we are open to any other considerations that you wish to add or improve.  Please feel free to contiribute no matter how small the change can you add.
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a 
-   build.
-2. Update the README.md with details of changes to the interface, this includes new environment 
-   variables, exposed ports, useful file locations and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this
-   Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
-4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you 
-   do not have permission to do that, you may request the second reviewer to merge it for you.
+<br><hr><br>
 
-## Code of Conduct
+## Important considerations
 
-### Our Pledge
+This is a public repository. Please double-check your commits before pushing:
+  - Update documentation if your change introduces new functionality.
+  - Add proper `.gitignore` rules to avoid uploading temporary or sensitive files.
+  - Never Commit Tokens, Passwords, or Any Credential/Secrets. (or if you commit it for nice examples/references please add `#FAKE` in the end)
+  - Run linting/formatting tools to keep code style consistent.
+  - If your change affects logic, include or update tests.
+  - Do not push large binaries or auto-generated files unless they are explicitly required.
+  - Always link your contributions to an existing issue when possible.
 
-In the interest of fostering an open and welcoming environment, we as
-contributors and maintainers pledge to making participation in our project and
-our community a harassment-free experience for everyone, regardless of age, body
-size, disability, ethnicity, gender identity and expression, level of experience,
-nationality, personal appearance, race, religion, or sexual identity and
-orientation.
 
-### Our Standards
+<br><hr><br>
 
-Examples of behavior that contributes to creating a positive environment
-include:
+### 1. Format names and branching
+	
+#### Format: 
+      <type>/<short-description>
+      <type>/<issue-number>
 
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+#### Examples:
 
-Examples of unacceptable behavior by participants include:
+<ul>
+  <li>feat/webserver-refactor</li>
+  <li>fix/login-bug</li>
+  <li>docs/update-readme</li>
+  <li>fix/issue-43</li>
+  <li>feat/issue-135</li>
+</ul>
 
-* The use of sexualized language or imagery and unwelcome sexual attention or
-advances
-* Trolling, insulting/derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or electronic
-  address, without explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
 
-### Our Responsibilities
 
-Project maintainers are responsible for clarifying the standards of acceptable
-behavior and are expected to take appropriate and fair corrective action in
-response to any instances of unacceptable behavior.
+<br><hr><br>
 
-Project maintainers have the right and responsibility to remove, edit, or
-reject comments, commits, code, wiki edits, issues, and other contributions
-that are not aligned to this Code of Conduct, or to ban temporarily or
-permanently any contributor for other behaviors that they deem inappropriate,
-threatening, offensive, or harmful.
+### 2. Commits (Conventional Commits)
 
-### Scope
+#### Format:
+		<type>(<scope>): <mensaje> [opcional: (#issue)]
 
-This Code of Conduct applies both within project spaces and in public spaces
-when an individual is representing the project or its community. Examples of
-representing a project or community include using an official project e-mail
-address, posting via an official social media account, or acting as an appointed
-representative at an online or offline event. Representation of a project may be
-further defined and clarified by project maintainers.
 
-### Enforcement
+| name      | desc                                                    |
+|---        |---                                                      |
+| type: 		| commit type.                                            |
+| scope: 	| module/area/app affected.                               |
+| mensaje: 	| small descripción (always in lowercase).                |
+| (#issue): | Github Issue reference (optional but super useful).     |
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at [INSERT EMAIL ADDRESS]. All
-complaints will be reviewed and investigated and will result in a response that
-is deemed necessary and appropriate to the circumstances. The project team is
-obligated to maintain confidentiality with regard to the reporter of an incident.
-Further details of specific enforcement policies may be posted separately.
 
-Project maintainers who do not follow or enforce the Code of Conduct in good
-faith may face temporary or permanent repercussions as determined by other
-members of the project's leadership.
+#### Issue type:	
 
-### Attribution
+| name           | desc                             |
+|---             |---                               |
+| feat:          | New functionality (Bump Minor).  | 
+| fix:           | BUG correction (Bump Patch).     |
+| refactor:      | Code refactorization.            |
+| doc/docs:      | Documentation.                   |
+| chore:         | maintenance tasks.               |
+| test:          | changes or aggregates of tests.  |
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
-available at [http://contributor-covenant.org/version/1/4][version]
+#### Examples:
+      git commit -m "feat(auth): new login super cool (#43)"
+      git commit -m "fix(ui): small correction in css file (#128)"
+      git commit -m "refactor(webserver): new architecture (#43)"
+      git commit -m "docs(readme): add new document how to do..."
 
-[homepage]: http://contributor-covenant.org
-[version]: http://contributor-covenant.org/version/1/4/
+#### Breaking changes:
+When an Commit introduces an incompatible change, it must be used! or the Breaking Change text: if you want to be more specific
+      
+      git commit -m "feat!: change all api functionality (#200)"
+      git commit -m "fix(auth)!: delete legacy support (#199)"
+      git commit -m "feat(api): change contract (#200)" -m "BREAKING CHANGE: old API removed"
+
+			
+<br><hr><br>
+
+### 3. Automatic versioning
+
+This repository uses Semantic Version to generate automatic versions based on commitments, for this reason we will use minimal rules so that everything has coherence.
+
+| Commit                                   | Impact in versión        |
+|------------------------------------------|--------------------------|
+| feat:                                    | minor)                   |
+| fix:                                     | patch)                   |
+| feat!: / fix!: / BREAKING CHANGE:        | major)                   |
+| chore: / docs: / refactor: / test:       | no changes               |
+| feat(api): ... -beta                     | prerelease X.Y.Z-beta    |
+| build:                                   | add metadata +sha     	  |
+
+#### Examples
+
+| Ejemplo de commit                         | Versión resultante    |
+|-------------------------------------------|-----------------------|
+| feat(auth): agregar login (#43)           | 1.3.0                 |
+| fix(ui): corregir botón (#44)             | 1.2.4                 |
+| feat!: eliminar endpoint legacy (#45)     | 2.0.0                 |
+| feat(auth): login social -beta            | 1.3.0-beta            |
+| build(docker): optimizar imagen           | 1.2.3+build.a1b2c3    |
+
+
+<br><hr><br>
+
+### 4. Basic flow
+
+
+#### Clone or pull 
+      git clone ...  or   git pull
+
+#### Make branch from main:
+      git checkout -b feat/webserver-refactor
+
+#### Make commits with standard ConvCommits:
+      git commit -m "refactor(webserver): new architecture (#43)"
+
+#### Create a PR with standard format:
+      refactor(webserver): new architecture (#43)
