@@ -8,10 +8,11 @@ metadata:
     app: argocd-badges-api
 spec:
   replicas: 1
-  type: RollingUpdate    
-  rollingUpdate:      
-     maxSurge: 50%          
-     maxUnavailable: 0  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: argocd-badges-api
@@ -20,7 +21,6 @@ spec:
       labels:
         app: argocd-badges-api
     spec:
-  strategy: 
       containers:
         - name: argocd-badges-api
           image: jpradoar/argocd-badges-api:latest
@@ -34,8 +34,8 @@ spec:
             - name: ARGOCD_TOKEN
               valueFrom:
                 secretKeyRef:
-                  - name: showappsapi-secret
-                    key: showappsapi-secret
+                  name: showappsapi-secret
+                  key: showappsapi-secret
         livenessProbe:
           httpGet:
             path: /health
