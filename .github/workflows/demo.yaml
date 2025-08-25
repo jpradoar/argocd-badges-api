@@ -165,7 +165,7 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ env.SLACK_BUILD_CHANNEL}}
           SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
-          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ GH_REPO_OWNER }}/${{ env.REPO_APP }}'
+          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.GH_REPO_OWNER }}/${{ env.REPO_APP }}'
           SLACK_TITLE: ':rocket: GithubAction Build docker image: [ ${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_BUILDS }}
 
@@ -176,7 +176,7 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ env.SLACK_SECURITY_CHANNEL}}
           SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
-          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ GH_REPO_OWNER }}/${{ env.REPO_APP }}'
+          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.GH_REPO_OWNER }}/${{ env.REPO_APP }}'
           SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_SECURITY_ISSUES }}
 
