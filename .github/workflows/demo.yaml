@@ -9,9 +9,9 @@ on:
       - '.github/workflows/demo.yaml'
 
 env:
-  REPO_APP: 'argocd-badges-api'
-  BUILD_CONTEXT: './app'
-  COMMITER_NAME: 'AutoCommit'
+  APP_NAME: 'argocd-badges-api'
+  APP_BUILD_CONTEXT: './app'
+  
   VULN_SEVERITY: 'CRITICAL,HIGH'
   VULN_TYPE: 'os,library'
   VULN_FORMAT: 'table'
@@ -21,13 +21,13 @@ env:
   VULN_EXIT_CODE: 1
   TRIVY_DISABLE_VEX_NOTICE: true
   TRIVY_REPOSITORY: 'public.ecr.aws/aquasecurity/trivy-db:2'
+  GH_REPO_COMMITER_NAME: 'VulnScanner'
   GH_REPO_OWNER: ${{ github.repository_owner }}
   GH_REPO_NAME: ${{ github.event.repository.name }}
   GH_REPO_BRANCH: ${{ github.ref_name }}
   SLACK_SECURITY_CHANNEL: 'security_issues'
   SLACK_BUILD_CHANNEL: 'builds'
   SLACK_MSG_COLOR: '#0092ff'
-
 
 jobs:
   build-and-release:
@@ -54,7 +54,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v4
         with:
-          context: ${{ env.BUILD_CONTEXT }}
+          context: ${{ env.APP_BUILD_CONTEXT }}
           push: true
           load: true
           tags: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:latest
@@ -118,7 +118,7 @@ jobs:
         id: docker_push_version
         uses: docker/build-push-action@v4
         with:
-          context: ${{ env.BUILD_CONTEXT }}
+          context: ${{ env.APP_BUILD_CONTEXT }}
           push: true
           tags: ${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }}
 
@@ -128,9 +128,9 @@ jobs:
         run: |
           echo "### See detailed information in: " > /tmp/vuln_info.md
           echo "<br>![](https://custom-icon-badges.demolab.com/badge/Vulnerability-detected-red.svg) ![](https://custom-icon-badges.demolab.com/badge/Affected_version-${{ steps.get_version.outputs.version }}-purple.svg) <br>" >> /tmp/vuln_info.md
-          echo " * Detected in image: [${{ env.REPO_APP }}](https://hub.docker.com/repository/docker/${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}/general)" >> /tmp/vuln_info.md
+          echo " * Detected in image: [${{ env.APP_NAME }}](https://hub.docker.com/repository/docker/${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}/general)" >> /tmp/vuln_info.md
           echo " * Detected in commit: ${{ github.sha }}"  >> /tmp/vuln_info.md
-          echo " * Vulnerability report: [vuln_report](https://github.com/${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}/blob/${{ env.GH_REPO_BRANCH }}/vuln_scans/${{ env.REPO_APP }}_vuln_scan.table)" >> /tmp/vuln_info.md
+          echo " * Vulnerability report: [vuln_report](https://github.com/${{ github.repository_owner }}/${{ env.GH_REPO_NAME }}/blob/${{ env.GH_REPO_BRANCH }}/vuln_scans/${{ env.APP_NAME }}_vuln_scan.table)" >> /tmp/vuln_info.md
 
 
       - name: update data
@@ -149,10 +149,10 @@ jobs:
       - name: Vulnerability detected - Create issue
         if: ${{ steps.trivy_scan.outcome == 'failure' }}
         run: |
-          body="New vulnerability detected on vuln_scans/${{ env.REPO_APP }}_vuln_scan.table"
+          body="New vulnerability detected on vuln_scans/${{ env.APP_NAME }}_vuln_scan.table"
           gh issue create \
           --repo ${{ github.repository }} \
-          --title ":skull: [vuln] vulnerability detected on image ${{ env.REPO_APP }} " \
+          --title ":skull: [vuln] vulnerability detected on image ${{ env.APP_NAME }} " \
           --body-file '/tmp/vuln_info.md' \
           --assignee "jpradoar" \
           --label bug
@@ -165,7 +165,7 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ env.SLACK_BUILD_CHANNEL}}
           SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
-          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.GH_REPO_OWNER }}/${{ env.REPO_APP }}'
+          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.GH_REPO_OWNER }}/${{ env.APP_NAME }}'
           SLACK_TITLE: ':rocket: GithubAction Build docker image: [ ${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_BUILDS }}
 
@@ -176,7 +176,7 @@ jobs:
         env:
           SLACK_CHANNEL: ${{ env.SLACK_SECURITY_CHANNEL}}
           SLACK_COLOR: ${{ env.SLACK_MSG_COLOR }}
-          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.GH_REPO_OWNER }}/${{ env.REPO_APP }}'
+          SLACK_MESSAGE: 'URL: https://hub.docker.com/repository/docker/${{ env.GH_REPO_OWNER }}/${{ env.APP_NAME }}'
           SLACK_TITLE: ':skull: Vulnerability detected in: [ ${{ env.GH_REPO_NAME }}:${{ steps.get_version.outputs.version }} ]'
           SLACK_WEBHOOK: ${{ secrets.SLACK_SECURITY_ISSUES }}
 
